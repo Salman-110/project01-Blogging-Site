@@ -124,23 +124,27 @@ module.exports.deleteBlogs = deleteBlogs;
 const queryDeleted = async function (req, res) {
     try {
         let data = req.query;
-        let blog = req.params.blogId;
+        let blog = req.query.authorId;
+
+        if (!blog) {
+            return res.status(400).send({ status: false, msg: "Plz Enter authorId In Query" });
+        }
 
         let valid = await blogModel.findOne(data);
         if (!valid) {
             return res.status(404).send({ status: false, msg: "Data doesn't exit!!" })
         }
-        
+
         if (Object.values(data).length <= 0) {
             return res.status(400).send({ status: false, msg: "Input Missing" });
         }
 
         let deleted = await blogModel.findOneAndUpdate(data, { isDeleted: true }, { new: true });
         if (deleted.isDeleted == true) {
-            let update = await blogModel.findOneAndUpdate({ _id: blog }, { deletedAt: new String(Date()) });
+            let update = await blogModel.findOneAndUpdate(data,{$set: { deletedAt: new String(Date()) }});
         }
         if (deleted.isDeleted == false) {
-            let update = await blogModel.findOneAndUpdate({ _id: blog }, { deletedAt: null });
+            let update = await blogModel.findOneAndUpdate(data,{$set: { deletedAt: null }});
         }
         return res.status(200).send({ status: true, data: deleted });
     }
